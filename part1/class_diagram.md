@@ -2,7 +2,6 @@
 
 ```mermaid
 classDiagram
-classDiagram
 direction LR
 
 %% ---------- Core abstraction (audit + id everywhere) ----------
