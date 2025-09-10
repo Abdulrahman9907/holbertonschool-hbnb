@@ -1,0 +1,13 @@
+# HBnB Application Dependencies
+
+# Web framework
+Flask==2.3.3
+
+# REST API framework with Swagger UI
+Flask-RESTx==1.3.0
+
+# Password hashing
+flask-bcrypt
+
+# For additional validation and testing (optional but recommended)
+requests==2.31.0
