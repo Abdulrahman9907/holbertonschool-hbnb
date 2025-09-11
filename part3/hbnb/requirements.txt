@@ -9,5 +9,8 @@ Flask-RESTx==1.3.0
 # Password hashing
 flask-bcrypt
 
+# JWT authentication
+flask-jwt-extended
+
 # For additional validation and testing (optional but recommended)
 requests==2.31.0
