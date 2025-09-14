@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services import facade
 
 api = Namespace('users', description='User operations')
@@ -25,8 +26,16 @@ class UserList(Resource):
     @api.response(201, 'User successfully created')
     @api.response(400, 'Email already registered')
     @api.response(400, 'Invalid input data')
+    @api.response(403, 'Admin privileges required')
+    @jwt_required()
     def post(self):
-        """Register a new user"""
+        """Register a new user (Admin only)"""
+        current_user = get_jwt_identity()
+        
+        # Check if user is admin
+        if not current_user.get('is_admin'):
+            return {'error': 'Admin privileges required'}, 403
+            
         user_data = api.payload
         
         try:
@@ -99,8 +108,11 @@ class UserResource(Resource):
     @api.response(200, 'User updated successfully')
     @api.response(404, 'User not found')
     @api.response(400, 'Invalid input data')
+    @api.response(403, 'Unauthorized action')
+    @jwt_required()
     def put(self, user_id):
         """Update user information"""
+        current_user = get_jwt_identity()
         user_data = api.payload
         
         try:
@@ -109,7 +121,21 @@ class UserResource(Resource):
             if not existing_user:
                 return {'error': 'User not found'}, 404
 
-            # Check email uniqueness if email is being updated
+            # Check if user is updating their own data or is admin
+            is_admin = current_user.get('is_admin', False)
+            current_user_id = current_user.get('id')
+
+            if not is_admin and user_id != current_user_id:
+                return {'error': 'Unauthorized action'}, 403
+
+            # For regular users (non-admin), prevent email and password changes
+            if not is_admin:
+                if 'email' in user_data:
+                    return {'error': 'You cannot modify email or password'}, 400
+                if 'password' in user_data:
+                    return {'error': 'You cannot modify email or password'}, 400
+
+            # Check email uniqueness if email is being updated (for admins)
             if 'email' in user_data and user_data['email'] != existing_user.email:
                 user_with_email = facade.get_user_by_email(user_data['email'])
                 # If email exists and belongs to a different user, return error

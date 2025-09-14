@@ -148,3 +148,26 @@ class HBnBFacade:
             review.place.save()
         self.review_repo.delete(review_id)
         return True
+
+    def get_reviews_by_place(self, place_id):
+        """Get all reviews for a specific place"""
+        place = self.get_place(place_id)
+        if not place:
+            return []
+        return place.reviews
+
+    def get_user_reviews(self, user_id):
+        """Get all reviews created by a specific user"""
+        all_reviews = self.get_all_reviews()
+        return [review for review in all_reviews if review.user.id == user_id]
+
+    def delete_place(self, place_id):
+        """Delete a place"""
+        place = self.place_repo.get(place_id)
+        if not place:
+            return False
+        # Remove associated reviews
+        for review in place.reviews[:]:  # Use slice to avoid modifying list while iterating
+            self.delete_review(review.id)
+        self.place_repo.delete(place_id)
+        return True

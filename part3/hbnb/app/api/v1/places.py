@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services import facade
 
 api = Namespace('places', description='Place operations')
@@ -20,9 +21,14 @@ class PlaceList(Resource):
     @api.response(201, 'Place successfully created')
     @api.response(400, 'Invalid input data')
     @api.response(404, 'Owner not found')
+    @jwt_required()
     def post(self):
         """Register a new place"""
+        current_user = get_jwt_identity()
         place_data = api.payload.copy()
+        
+        # Set the owner_id to the authenticated user
+        place_data['owner_id'] = current_user['id']
         
         # Check if owner exists
         owner = facade.get_user(place_data['owner_id'])
@@ -110,14 +116,24 @@ class PlaceResource(Resource):
     @api.response(200, 'Place updated successfully')
     @api.response(404, 'Place not found')
     @api.response(400, 'Invalid input data')
+    @api.response(403, 'Unauthorized action')
+    @jwt_required()
     def put(self, place_id):
         """Update place information"""
+        current_user = get_jwt_identity()
         place_data = api.payload.copy()
         
         # Check if place exists
         existing_place = facade.get_place(place_id)
         if not existing_place:
             return {'error': 'Place not found'}, 404
+
+        # Check if user is the owner or admin
+        is_admin = current_user.get('is_admin', False)
+        user_id = current_user.get('id')
+
+        if not is_admin and existing_place.owner.id != user_id:
+            return {'error': 'Unauthorized action'}, 403
         
         # Remove owner_id and amenities from update data (these shouldn't be updated via PUT)
         place_data.pop('owner_id', None)
