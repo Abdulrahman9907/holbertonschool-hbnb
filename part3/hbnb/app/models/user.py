@@ -1,4 +1,6 @@
 # app/models/user.py
+from sqlalchemy import Column, String, Boolean
+from sqlalchemy.orm import relationship
 from . import BaseModel, _require_str, _require_bool, _require_email
 
 class User(BaseModel):
@@ -10,12 +12,24 @@ class User(BaseModel):
       - password   (required, hashed)
       - is_admin   (bool, default False)
     """
+    __tablename__ = 'users'
+
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    email = Column(String(255), nullable=False, unique=True)
+    password = Column(String(255), nullable=True)
+    is_admin = Column(Boolean, default=False)
+
+    # Relationships (will be updated in Task 8)
+    places = relationship("Place", back_populates="owner")
+    reviews = relationship("Review", back_populates="user")
+
     # simple in-memory uniqueness guard for emails (per-process)
     _emails_registry = set()
 
-    def __init__(self, first_name: str, last_name: str, email: str, 
-                 password: str = None, is_admin: bool = False):
-        super().__init__()
+    def __init__(self, first_name: str, last_name: str, email: str,
+                 password: str = None, is_admin: bool = False, **kwargs):
+        super().__init__(**kwargs)
         
         # validate basic fields
         _require_str("first_name", first_name, max_len=50, required=True)
@@ -45,7 +59,8 @@ class User(BaseModel):
     def hash_password(self, password):
         """Hashes the password before storing it."""
         # Import here to avoid circular imports
-        from app import bcrypt
+        from flask_bcrypt import Bcrypt
+        bcrypt = Bcrypt()
         
         # Validate password (add your own password requirements here)
         _require_str("password", password, required=True)
@@ -56,7 +71,8 @@ class User(BaseModel):
     def verify_password(self, password):
         """Verifies if the provided password matches the hashed password."""
         # Import here to avoid circular imports
-        from app import bcrypt
+        from flask_bcrypt import Bcrypt
+        bcrypt = Bcrypt()
         
         if not self.password:
             return False

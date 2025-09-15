@@ -12,5 +12,9 @@ flask-bcrypt
 # JWT authentication
 flask-jwt-extended
 
+# Database ORM
+SQLAlchemy==1.4.53
+Flask-SQLAlchemy==3.0.5
+
 # For additional validation and testing (optional but recommended)
 requests==2.31.0

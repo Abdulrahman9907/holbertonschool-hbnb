@@ -2,8 +2,12 @@
 import re
 import uuid
 from datetime import datetime
+from sqlalchemy import Column, String, DateTime, Table, ForeignKey
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+# Association table for many-to-many relationship between Place and Amenity
+# This will be initialized after db is imported
 
 def _require_str(name, value, max_len=None, required=False):
     if required and (value is None or value == ""):
@@ -32,19 +36,29 @@ def _require_email(name, value):
     if not EMAIL_RE.match(value):
         raise ValueError(f"{name} must be a valid email")
 
-class BaseModel:
+from database import db
+
+# Association table for many-to-many relationship between Place and Amenity
+place_amenity = Table('place_amenity', db.Model.metadata,
+    Column('place_id', String(36), ForeignKey('places.id'), primary_key=True),
+    Column('amenity_id', String(36), ForeignKey('amenities.id'), primary_key=True)
+)
+
+class BaseModel(db.Model):
     """
     Common base with id (UUID string), created_at, updated_at.
     Provides save() and update() with per-field validation hook.
     """
-    def __init__(self):
-        self.id = str(uuid.uuid4())
-        self.created_at = datetime.now()
-        self.updated_at = datetime.now()
+    __abstract__ = True
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def save(self):
         """Update the updated_at timestamp whenever the object is modified."""
         self.updated_at = datetime.now()
+        db.session.commit()
 
     def _validate_field(self, key, value):
         """Override in subclasses to validate per-field updates."""
@@ -66,3 +80,9 @@ class BaseModel:
             if hasattr(self, k):
                 setattr(self, k, v)
         self.save()
+
+# Import models after BaseModel definition to avoid circular imports
+from .user import User
+from .place import Place
+from .review import Review
+from .amenity import Amenity

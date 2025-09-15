@@ -1,12 +1,15 @@
-from app.persistence.repository import InMemoryRepository
+from app.persistence.user_repository import UserRepository
+from app.persistence.place_repository import PlaceRepository
+from app.persistence.review_repository import ReviewRepository
+from app.persistence.amenity_repository import AmenityRepository
 from app.models import User, Place, Review, Amenity
 
 class HBnBFacade:
     def __init__(self):
-        self.user_repo = InMemoryRepository()
-        self.place_repo = InMemoryRepository()
-        self.review_repo = InMemoryRepository()
-        self.amenity_repo = InMemoryRepository()
+        self.user_repo = UserRepository()
+        self.place_repo = PlaceRepository()
+        self.review_repo = ReviewRepository()
+        self.amenity_repo = AmenityRepository()
 
     def create_user(self, user_data):
         """Create a new user with hashed password"""
@@ -21,7 +24,7 @@ class HBnBFacade:
         return self.place_repo.get(place_id)
 
     def get_user_by_email(self, email):
-        return self.user_repo.get_by_attribute('email', email)
+        return self.user_repo.get_by_email(email)
 
     def get_all_users(self):
         """Retrieve all users from the repository"""
@@ -35,9 +38,6 @@ class HBnBFacade:
 
         # Use the User model's update method which handles password hashing
         user.update(user_data)
-        
-        # Update in repository
-        self.user_repo.update(user_id, user)
         return user
 
     # Amenity methods
@@ -50,7 +50,7 @@ class HBnBFacade:
         return self.amenity_repo.get(amenity_id)
 
     def get_amenity_by_name(self, name):
-        return self.amenity_repo.get_by_attribute('name', name)
+        return self.amenity_repo.get_by_name(name)
 
     def get_all_amenities(self):
         return self.amenity_repo.get_all()
@@ -59,10 +59,7 @@ class HBnBFacade:
         amenity = self.amenity_repo.get(amenity_id)
         if not amenity:
             return None
-        for key, value in amenity_data.items():
-            if hasattr(amenity, key):
-                setattr(amenity, key, value)
-        self.amenity_repo.update(amenity_id, amenity)
+        amenity.update(amenity_data)
         return amenity
 
     # Place methods
@@ -94,10 +91,11 @@ class HBnBFacade:
         place = self.place_repo.get(place_id)
         if not place:
             return None
-        for key, value in place_data.items():
-            if hasattr(place, key) and key != 'owner':  # Don't allow owner changes
-                setattr(place, key, value)
-        self.place_repo.update(place_id, place)
+        # Don't allow owner changes
+        if 'owner' in place_data:
+            place_data = place_data.copy()
+            del place_data['owner']
+        place.update(place_data)
         return place
 
     # Review methods
@@ -132,20 +130,15 @@ class HBnBFacade:
         review = self.review_repo.get(review_id)
         if not review:
             return None
-        for key, value in review_data.items():
-            if hasattr(review, key) and key not in ['user', 'place']:  # Don't allow user/place changes
-                setattr(review, key, value)
-        self.review_repo.update(review_id, review)
+        # Don't allow user/place changes
+        filtered_data = {k: v for k, v in review_data.items() if k not in ['user', 'place']}
+        review.update(filtered_data)
         return review
 
     def delete_review(self, review_id):
         review = self.review_repo.get(review_id)
         if not review:
             return False
-        # Remove from place's reviews list
-        if review in review.place.reviews:
-            review.place.reviews.remove(review)
-            review.place.save()
         self.review_repo.delete(review_id)
         return True
 
@@ -166,8 +159,6 @@ class HBnBFacade:
         place = self.place_repo.get(place_id)
         if not place:
             return False
-        # Remove associated reviews
-        for review in place.reviews[:]:  # Use slice to avoid modifying list while iterating
-            self.delete_review(review.id)
+        # SQLAlchemy cascade will handle review deletion
         self.place_repo.delete(place_id)
         return True
