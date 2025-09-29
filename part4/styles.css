@@ -1,8 +1,4 @@
-/* 
-  This is a SAMPLE File to get you started. Follow the instructions on the project to complete the tasks. 
-  You'll probably need to override some of theese styles.
-*/
-
+/* Reset */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -15,6 +11,7 @@ body {
     color: #333;
 }
 
+/* Header */
 header {
     background-color: #333;
     color: #fff;
@@ -27,6 +24,96 @@ nav a {
     margin-left: 1rem;
 }
 
+.logo {
+    height: 50px;
+}
+
+.login-button {
+    background-color: #007bff;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+}
+
+/* Main */
 main {
     padding: 2rem;
+}
+
+/* Place Card - REQUIRED SPECS */
+.place-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 20px;
+    background-color: white;
+}
+
+.details-button {
+    background-color: #007bff;
+    color: white;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+/* Place Details */
+.place-details {
+    background-color: white;
+    padding: 2rem;
+}
+
+.place-info h1 {
+    margin-bottom: 1rem;
+}
+
+/* Review Card - REQUIRED SPECS */
+.review-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 20px;
+    background-color: white;
+}
+
+/* Add Review */
+.add-review {
+    background-color: white;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+/* Form */
+.form {
+    max-width: 500px;
+}
+
+.form label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form input,
+.form textarea,
+.form select {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form button {
+    background-color: #28a745;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Footer */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
 }
